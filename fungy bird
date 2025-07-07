@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird Evolution</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        #game-container {
+            width: 900px;
+            height: 650px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+        }
+        
+        #sidebar {
+            width: 250px;
+            background: rgba(30, 30, 50, 0.9);
+            padding: 20px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #444;
+        }
+        
+        #game-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #game-canvas {
+            background-color: #70c5ce;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #start-screen, #game-over-screen, #settings-screen, #shop-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            z-index: 10;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        #game-over-screen, #settings-screen, #shop-screen {
+            display: none;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #ffcc00;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+        }
+        
+        h2 {
+            font-size: 2rem;
+            margin: 15px 0;
+            color: #4dabf7;
+        }
+        
+        h3 {
+            margin: 10px 0;
+            color: #ffcc00;
+        }
+        
+        button {
+            background: linear-gradient(to bottom, #ff8c00, #ff5200);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            margin: 10px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(to bottom, #ff9c20, #ff6210);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .bird-selector {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .bird-option {
+            width: 60px;
+            height: 60px;
+            margin: 5px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .bird-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .bird-option.selected {
+            border-color: #ffcc00;
+            box-shadow: 0 0 15px #ffcc00;
+        }
+        
+        .background-selector {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .bg-option {
+            width: 80px;
+            height: 60px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .bg-option.selected {
+            border-color: #4dabf7;
+            box-shadow: 0 0 15px #4dabf7;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            font-size: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 10px;
+        }
+        
+        #score-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 2.5rem;
+            color: white;
+            z-index: 5;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+        
+        #reward-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.2rem;
+            color: #ffcc00;
+            z-index: 5;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+        
+        .settings-group {
+            background: rgba(50, 50, 70, 0.7);
+            padding: 15px;
+            border-radius: 15px;
+            margin: 10px 0;
+            width: 80%;
+        }
+        
+        input[type="range"], input[type="text"] {
+            width: 100%;
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+        }
+        
+        .shop-item {
+            background: rgba(50, 50, 70, 0.7);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px;
+            width: 150px;
+            text-align: center;
+        }
+        
+        .shop-items {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        
+        .shop-item img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+            background-color: #444;
+        }
+        
+        .cost {
+            color: #ffcc00;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .unlocked {
+            background: linear-gradient(to bottom, #4CAF50, #2E7D32);
+        }
+        
+        .profile-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 10px auto;
+            background-color: #444;
+            background-size: cover;
+            background-position: center;
+            border: 3px solid #4dabf7;
+        }
+        
+        .difficulty {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .difficulty-level {
+            padding: 8px 15px;
+            margin: 5px;
+            background: #444;
+            border-radius: 20px;
+            cursor: pointer;
+            min-width: 70px;
+            text-align: center;
+        }
+        
+        .difficulty-level.active {
+            background: #ff8c00;
+        }
+        
+        .game-mode {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .mode {
+            padding: 10px;
+            margin: 5px;
+            background: #333;
+            border-radius: 10px;
+            cursor: pointer;
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .mode.active {
+            background: #4dabf7;
+        }
+        
+        .player-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .level-indicator {
+            background: rgba(50, 50, 70, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        #timer-display {
+            position: absolute;
+            top: 70px;
+            left: 20px;
+            font-size: 1.5rem;
+            color: white;
+            z-index: 5;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            width: 30%;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="sidebar">
+            <div class="player-info">
+                <div class="profile-img" id="profile-img"></div>
+                <h3 id="player-name">Player 1</h3>
+                <div id="reward-display">Reward Points: <span id="reward-points">150</span></div>
+            </div>
+            
+            <h3>Game Mode</h3>
+            <div class="game-mode">
+                <div class="mode active" data-mode="classic">Classic</div>
+                <div class="mode" data-mode="time">Time Trial</div>
+                <div class="mode" data-mode="survival">Survival</div>
+            </div>
+            
+            <h3>Difficulty Level</h3>
+            <div class="difficulty">
+                <div class="difficulty-level active" data-level="easy">Easy</div>
+                <div class="difficulty-level" data-level="medium">Medium</div>
+                <div class="difficulty-level" data-level="hard">Hard</div>
+                <div class="difficulty-level" data-level="expert">Expert</div>
+            </div>
+            
+            <div class="level-indicator">
+                <h3>Current Level: <span id="current-level">1</span></h3>
+                <div class="progress-bar">
+                    <div class="progress" id="level-progress"></div>
+                </div>
+            </div>
+            
+            <h3>Select Bird</h3>
+            <div class="bird-selector">
+                <div class="bird-option selected" style="background-color: #ffcc00;" data-bird="yellow"></div>
+                <div class="bird-option" style="background-color: #ff5252;" data-bird="red"></div>
+                <div class="bird-option" style="background-color: #4dabf7;" data-bird="blue"></div>
+                <div class="bird-option" style="background-color: #4CAF50;" data-bird="green"></div>
+                <div class="bird-option" style="background: linear-gradient(45deg, #ff9a9e, #fad0c4);" data-bird="pink"></div>
+                <div class="bird-option" style="background: linear-gradient(45deg, #a1c4fd, #c2e9fb);" data-bird="premium1"></div>
+            </div>
+            
+            <h3>Background</h3>
+            <div class="background-selector">
+                <div class="bg-option selected" style="background: linear-gradient(to bottom, #70c5ce, #8de2e0);" data-bg="0"></div>
+                <div class="bg-option" style="background: linear-gradient(to bottom, #ff9a9e, #fad0c4);" data-bg="1"></div>
+                <div class="bg-option" style="background: linear-gradient(to bottom, #a1c4fd, #c2e9fb);" data-bg="2"></div>
+                <div class="bg-option" style="background: linear-gradient(to bottom, #d4fc79, #96e6a1);" data-bg="3"></div>
+                <div class="bg-option" style="background: linear-gradient(to bottom, #6a11cb, #2575fc);" data-bg="4"></div>
+            </div>
+            
+            <div style="margin-top: auto; text-align: center;">
+                <button id="shop-btn">Bird Shop</button>
+                <button id="settings-btn">Settings</button>
+            </div>
+        </div>
+        
+        <div id="game-area">
+            <canvas id="game-canvas" width="650" height="650"></canvas>
+            
+            <div id="score-display">Score: 0</div>
+            <div id="timer-display">Time: 60s</div>
+            
+            <div id="start-screen">
+                <h1>FLAPPY BIRD EVOLUTION</h1>
+                <p>Choose your game mode, difficulty, bird and background!</p>
+                <button id="play-btn">PLAY GAME</button>
+                <div class="controls">
+                    <button class="control-btn" id="up-btn">↑</button>
+                    <button class="control-btn" id="down-btn">↓</button>
+                </div>
+                <p>Press SPACE or tap to flap</p>
+            </div>
+            
+            <div id="game-over-screen">
+                <h1>GAME OVER</h1>
+                <h2>Score: <span id="final-score">0</span></h2>
+                <h2>Level Reached: <span id="final-level">1</span></h2>
+                <p>Rewards Earned: <span id="rewards-earned">10</span> points</p>
+                <button id="restart-btn">PLAY AGAIN</button>
+                <button id="menu-btn">MAIN MENU</button>
+            </div>
+            
+            <div id="settings-screen">
+                <h1>SETTINGS</h1>
+                
+                <div class="settings-group">
+                    <h3>Player Profile</h3>
+                    <input type="text" id="name-input" placeholder="Enter your name">
+                    <p>Profile Image: Coming Soon</p>
+                </div>
+                
+                <div class="settings-group">
+                    <h3>Audio Settings</h3>
+                    <label>Music Volume</label>
+                    <input type="range" id="music-volume" min="0" max="100" value="80">
+                    
+                    <label>SFX Volume</label>
+                    <input type="range" id="sfx-volume" min="0" max="100" value="90">
+                </div>
+                
+                <div class="settings-group">
+                    <h3>Game Settings</h3>
+                    <label>Control Sensitivity</label>
+                    <input type="range" id="sensitivity" min="1" max="10" value="5">
+                </div>
+                
+                <button id="save-settings">SAVE SETTINGS</button>
+                <button id="back-btn">BACK</button>
+            </div>
+            
+            <div id="shop-screen">
+                <h1>BIRD SHOP</h1>
+                <p>Use your reward points to unlock new birds!</p>
+                
+                <div class="shop-items">
+                    <div class="shop-item">
+                        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(45deg,#FF9A9E,#FAD0C4);margin:0 auto;"></div>
+                        <h4>Pink Flamingo</h4>
+                        <div class="cost">Cost: 100 points</div>
+                        <button>Unlock</button>
+                    </div>
+                    
+                    <div class="shop-item">
+                        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(45deg,#A1C4FD,#C2E9FB);margin:0 auto;"></div>
+                        <h4>Blue Jay</h4>
+                        <div class="cost">Cost: 150 points</div>
+                        <button>Unlock</button>
+                    </div>
+                    
+                    <div class="shop-item unlocked">
+                        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(45deg,#6A11CB,#2575FC);margin:0 auto;"></div>
+                        <h4>Royal Parrot</h4>
+                        <div class="cost">Unlocked</div>
+                        <button disabled>Equip</button>
+                    </div>
+                    
+                    <div class="shop-item">
+                        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(45deg,#FFE53B,#FF2525);margin:0 auto;"></div>
+                        <h4>Phoenix</h4>
+                        <div class="cost">Cost: 300 points</div>
+                        <button>Unlock</button>
+                    </div>
+                    
+                    <div class="shop-item">
+                        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(45deg,#00C9FF,#92FE9D);margin:0 auto;"></div>
+                        <h4>Emerald Eagle</h4>
+                        <div class="cost">Cost: 250 points</div>
+                        <button>Unlock</button>
+                    </div>
+                    
+                    <div class="shop-item">
+                        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(45deg,#F4D03F,#16A085);margin:0 auto;"></div>
+                        <h4>Golden Falcon</h4>
+                        <div class="cost">Cost: 500 points</div>
+                        <button>Unlock with Ad</button>
+                    </div>
+                </div>
+                
+                <button id="shop-back-btn">BACK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const settingsScreen = document.getElementById('settings-screen');
+        const shopScreen = document.getElementById('shop-screen');
+        const scoreDisplay = document.getElementById('score-display');
+        const timerDisplay = document.getElementById('timer-display');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const rewardsEarnedDisplay = document.getElementById('rewards-earned');
+        const rewardPointsDisplay = document.getElementById('reward-points');
+        const playerNameDisplay = document.getElementById('player-name');
+        const currentLevelDisplay = document.getElementById('current-level');
+        const levelProgress = document.getElementById('level-progress');
+        const finalLevelDisplay = document.getElementById('final-level');
+        
+        let gameRunning = false;
+        let score = 0;
+        let rewardPoints = 150;
+        let gameSpeed = 2;
+        let gravity = 0.5;
+        let bird;
+        let pipes = [];
+        let apples = [];
+        let frames = 0;
+        let currentBackground = 0;
+        let birdColor = '#ffcc00';
+        let playerName = "Player 1";
+        let gameMode = "classic";
+        let difficulty = "easy";
+        let currentLevel = 1;
+        let timeLeft = 60;
+        let gameTimer;
+        let gameDifficultySettings = {
+            easy: { gravity: 0.4, gap: 180, pipeFrequency: 120, appleFrequency: 180 },
+            medium: { gravity: 0.5, gap: 150, pipeFrequency: 100, appleFrequency: 150 },
+            hard: { gravity: 0.6, gap: 130, pipeFrequency: 80, appleFrequency: 120 },
+            expert: { gravity: 0.7, gap: 110, pipeFrequency: 60, appleFrequency: 100 }
+        };
+        
+        // Background gradients
+        const backgrounds = [
+            ['#70c5ce', '#8de2e0'],
+            ['#ff9a9e', '#fad0c4'],
+            ['#a1c4fd', '#c2e9fb'],
+            ['#d4fc79', '#96e6a1'],
+            ['#6a11cb', '#2575fc']
+        ];
+        
+        // Bird class
+        class Bird {
+            constructor() {
+                this.x = 50;
+                this.y = canvas.height / 2;
+                this.width = 34;
+                this.height = 24;
+                this.velocity = 0;
+                this.flapPower = -8;
+            }
+            
+            draw() {
+                ctx.fillStyle = birdColor;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw beak
+                ctx.fillStyle = '#ff8c00';
+                ctx.beginPath();
+                ctx.moveTo(this.x + 15, this.y);
+                ctx.lineTo(this.x + 30, this.y - 5);
+                ctx.lineTo(this.x + 30, this.y + 5);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Draw eye
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(this.x + 8, this.y - 5, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            update() {
+                this.velocity += gravity;
+                this.y += this.velocity;
+                
+                // Floor collision
+                if (this.y + this.height >= canvas.height - 80) {
+                    this.y = canvas.height - 80 - this.height;
+                    if (gameRunning) gameOver();
+                }
+                
+                // Ceiling collision
+                if (this.y <= 0) {
+                    this.y = 0;
+                    this.velocity = 0;
+                }
+            }
+            
+            flap() {
+                this.velocity = this.flapPower;
+            }
+            
+            fall() {
+                this.velocity = 5;
+            }
+        }
+        
+        // Pipe class
+        class Pipe {
+            constructor() {
+                this.width = 60;
+                this.x = canvas.width;
+                this.topHeight = Math.random() * (canvas.height - 200) + 50;
+                this.gap = gameDifficultySettings[difficulty].gap;
+                this.bottomY = this.topHeight + this.gap;
+                this.passed = false;
+                this.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+            }
+            
+            draw() {
+                // Top pipe
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, 0, this.width, this.topHeight);
+                
+                // Bottom pipe
+                ctx.fillRect(this.x, this.bottomY, this.width, canvas.height - this.bottomY);
+                
+                // Pipe caps
+                ctx.fillStyle = '#2a8a15';
+                ctx.fillRect(this.x - 5, this.topHeight - 20, this.width + 10, 20);
+                ctx.fillRect(this.x - 5, this.bottomY, this.width + 10, 20);
+            }
+            
+            update() {
+                this.x -= gameSpeed;
+                
+                // Check if bird passed the pipe
+                if (!this.passed && this.x + this.width < bird.x) {
+                    score++;
+                    scoreDisplay.textContent = `Score: ${score}`;
+                    this.passed = true;
+                    
+                    // Add reward points for passing pipes
+                    rewardPoints += 2;
+                    rewardPointsDisplay.textContent = rewardPoints;
+                    
+                    // Level progression
+                    if (score % 5 === 0) {
+                        currentLevel++;
+                        currentLevelDisplay.textContent = currentLevel;
+                        levelProgress.style.width = `${(score % 5) * 20}%`;
+                        
+                        // Increase difficulty with level
+                        gameSpeed = 2 + Math.floor(currentLevel / 3) * 0.5;
+                    }
+                }
+                
+                // Check for collision
+                if (bird.x + 15 > this.x && bird.x - 15 < this.x + this.width) {
+                    if (bird.y - 15 < this.topHeight || bird.y + 15 > this.bottomY) {
+                        gameOver();
+                    }
+                }
+            }
+        }
+        
+        // Apple class
+        class Apple {
+            constructor(y) {
+                this.x = canvas.width;
+                this.y = y;
+                this.radius = 12;
+                this.collected = false;
+            }
+            
+            draw() {
+                ctx.fillStyle = '#ff5252';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Stem
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillRect(this.x - 2, this.y - 15, 4, 8);
+            }
+            
+            update() {
+                this.x -= gameSpeed;
+                
+                // Check for collection
+                const dx = bird.x - this.x;
+                const dy = bird.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 15 + this.radius && !this.collected) {
+                    this.collected = true;
+                    score += 5;
+                    scoreDisplay.textContent = `Score: ${score}`;
+                    
+                    // Add reward points for collecting apples
+                    rewardPoints += 5;
+                    rewardPointsDisplay.textContent = rewardPoints;
+                }
+            }
+        }
+        
+        // Draw background with gradient
+        function drawBackground() {
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, backgrounds[currentBackground][0]);
+            gradient.addColorStop(1, backgrounds[currentBackground][1]);
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw ground
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(0, canvas.height - 80, canvas.width, 80);
+            
+            // Draw grass
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(0, canvas.height - 80, canvas.width, 20);
+            
+            // Draw clouds
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            for (let i = 0; i < 3; i++) {
+                const x = (frames * 0.5 + i * 200) % (canvas.width + 200) - 100;
+                ctx.beginPath();
+                ctx.arc(x, 80, 30, 0, Math.PI * 2);
+                ctx.arc(x + 25, 65, 25, 0, Math.PI * 2);
+                ctx.arc(x + 50, 80, 30, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Initialize game
+        function init() {
+            bird = new Bird();
+            pipes = [];
+            apples = [];
+            score = 0;
+            frames = 0;
+            currentLevel = 1;
+            timeLeft = 60;
+            
+            // Set game parameters based on difficulty
+            gravity = gameDifficultySettings[difficulty].gravity;
+            bird.flapPower = difficulty === "expert" ? -7 : -8;
+            
+            scoreDisplay.textContent = `Score: ${score}`;
+            currentLevelDisplay.textContent = currentLevel;
+            levelProgress.style.width = "0%";
+            timerDisplay.textContent = `Time: ${timeLeft}s`;
+            
+            if (gameTimer) clearInterval(gameTimer);
+            
+            if (gameMode === "time") {
+                gameTimer = setInterval(() => {
+                    timeLeft--;
+                    timerDisplay.textContent = `Time: ${timeLeft}s`;
+                    
+                    if (timeLeft <= 0) {
+                        gameOver();
+                    }
+                }, 1000);
+            }
+            
+            // Add first pipe
+            pipes.push(new Pipe());
+            
+            gameRunning = true;
+            gameOverScreen.style.display = 'none';
+            startScreen.style.display = 'none';
+        }
+        
+        // Game over function
+        function gameOver() {
+            gameRunning = false;
+            finalScoreDisplay.textContent = score;
+            finalLevelDisplay.textContent = currentLevel;
+            
+            if (gameTimer) clearInterval(gameTimer);
+            
+            // Calculate rewards (10 points per score + bonus)
+            const earnedRewards = Math.floor(score * 1.5);
+            rewardsEarnedDisplay.textContent = earnedRewards;
+            rewardPoints += earnedRewards;
+            rewardPointsDisplay.textContent = rewardPoints;
+            
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        // Game loop
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            // Update frames
+            frames++;
+            
+            // Clear canvas
+            drawBackground();
+            
+            // Draw and update bird
+            bird.update();
+            bird.draw();
+            
+            // Generate pipes
+            if (frames % gameDifficultySettings[difficulty].pipeFrequency === 0) {
+                pipes.push(new Pipe());
+                
+                // Change background every 5 pipes
+                if (pipes.length % 5 === 0) {
+                    currentBackground = (currentBackground + 1) % backgrounds.length;
+                }
+            }
+            
+            // Generate apples occasionally
+            if (frames % gameDifficultySettings[difficulty].appleFrequency === 0 && Math.random() > 0.3) {
+                apples.push(new Apple(Math.random() * (canvas.height - 150) + 100));
+            }
+            
+            // Draw and update pipes
+            for (let i = pipes.length - 1; i >= 0; i--) {
+                pipes[i].update();
+                pipes[i].draw();
+                
+                // Remove pipes that are off screen
+                if (pipes[i].x + pipes[i].width < 0) {
+                    pipes.splice(i, 1);
+                }
+            }
+            
+            // Draw and update apples
+            for (let i = apples.length - 1; i >= 0; i--) {
+                apples[i].update();
+                if (!apples[i].collected) {
+                    apples[i].draw();
+                } else {
+                    apples.splice(i, 1);
+                }
+            }
+            
+            // Increase difficulty with level
+            if (gameMode === "survival") {
+                gameSpeed = 2 + Math.floor(score / 10) * 0.5;
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Event listeners
+        document.getElementById('play-btn').addEventListener('click', () => {
+            init();
+            gameLoop();
+        });
+        
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            init();
+            gameLoop();
+        });
+        
+        document.getElementById('menu-btn').addEventListener('click', () => {
+            gameOverScreen.style.display = 'none';
+            startScreen.style.display = 'flex';
+        });
+        
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            settingsScreen.style.display = 'flex';
+        });
+        
+        document.getElementById('shop-btn').addEventListener('click', () => {
+            shopScreen.style.display = 'flex';
+        });
+        
+        document.getElementById('save-settings').addEventListener('click', () => {
+            playerName = document.getElementById('name-input').value || playerName;
+            playerNameDisplay.textContent = playerName;
+            settingsScreen.style.display = 'none';
+        });
+        
+        document.getElementById('back-btn').addEventListener('click', () => {
+            settingsScreen.style.display = 'none';
+        });
+        
+        document.getElementById('shop-back-btn').addEventListener('click', () => {
+            shopScreen.style.display = 'none';
+        });
+        
+        // Bird selection
+        document.querySelectorAll('.bird-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.bird-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+                birdColor = window.getComputedStyle(option).backgroundColor;
+            });
+        });
+        
+        // Background selection
+        document.querySelectorAll('.bg-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.bg-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+                currentBackground = parseInt(option.dataset.bg);
+            });
+        });
+        
+        // Mode selection
+        document.querySelectorAll('.mode').forEach(mode => {
+            mode.addEventListener('click', () => {
+                document.querySelectorAll('.mode').forEach(m => {
+                    m.classList.remove('active');
+                });
+                mode.classList.add('active');
+                gameMode = mode.dataset.mode;
+                
+                // Show/hide timer based on mode
+                timerDisplay.style.display = gameMode === "time" ? "block" : "none";
+            });
+        });
+        
+        // Difficulty selection
+        document.querySelectorAll('.difficulty-level').forEach(level => {
+            level.addEventListener('click', () => {
+                document.querySelectorAll('.difficulty-level').forEach(l => {
+                    l.classList.remove('active');
+                });
+                level.classList.add('active');
+                difficulty = level.dataset.level;
+            });
+        });
+        
+        // Control buttons
+        document.getElementById('up-btn').addEventListener('click', () => {
+            if (gameRunning) bird.flap();
+        });
+        
+        document.getElementById('down-btn').addEventListener('click', () => {
+            if (gameRunning) bird.fall();
+        });
+        
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && gameRunning) {
+                bird.flap();
+            }
+        });
+        
+        // Initialize player profile
+        document.getElementById('profile-img').style.backgroundColor = '#4dabf7';
+        document.getElementById('name-input').value = playerName;
+        rewardPointsDisplay.textContent = rewardPoints;
+    </script>
+</body>
+</html>
